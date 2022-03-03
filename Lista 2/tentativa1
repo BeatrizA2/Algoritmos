@@ -1,0 +1,149 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int n_andares, n_jazigos, andar, jazigo;
+
+int binary_search(vector<vector<vector<int>>> &array, int element, int min, int max);
+void add(vector<vector<vector<int>>> &array, int element);
+bool isThere(vector<vector<vector<int>>> &array, int element);
+
+int main()
+{
+  string comando = "hashtable";
+  int chave;
+
+  cin >> n_andares >> n_jazigos;
+  int vagas = n_andares * n_jazigos;
+
+  vector<vector<vector<int>>> cemiterio(n_andares, vector<vector<int>>(n_jazigos, vector<int>(2)));
+
+  while (comando != "END")
+  {
+    cin >> comando >> chave;
+    
+    if (comando == "ADD")
+    {
+      if (vagas == 0) //rehashing
+      {
+        vector<vector<vector<int>>> cemiterio2(2 * n_andares + 1, vector<vector<int>>(n_jazigos, vector<int>(2)));
+        
+        int n_andares_ant = n_andares;
+        n_andares = 2*n_andares + 1;
+        vagas = n_andares*n_jazigos;
+        
+        for (int i = 0; i < n_andares_ant; i++)
+            for(int j = 0; j < n_jazigos; j++)
+            {
+                if (cemiterio[i][j][1] == 1)
+                {
+                    andar = (cemiterio[i][j][0])%n_andares;
+                    add(cemiterio2, cemiterio[i][j][0]);
+                    vagas--;
+                }
+            }
+        cemiterio = cemiterio2;
+      }
+        
+      andar = chave % n_andares;
+      add(cemiterio, chave);
+      vagas --;
+      cout << andar << "." << jazigo << endl;
+    }
+    else if (comando == "REM")
+    {
+      if (isThere(cemiterio, chave) == true)
+        cemiterio[andar][jazigo][1] = 0;
+    }
+    else if (comando == "QRY")
+    {
+      isThere(cemiterio, chave);
+    }
+    
+  }
+}
+
+
+int binary_search(vector<vector<vector<int>>> &array, int element, int min, int max)
+{
+  int mid;
+
+  while (min <= max)
+  {
+    mid = (max + min) / 2;
+    
+    if (element == array[andar][mid][0])
+    {
+      if (array[andar][mid][1] == 1)
+      {
+        jazigo = mid;
+        return 1;
+      }
+      else
+        return -1;
+    }
+    else if(element < array[andar][mid][0] || array[andar][mid][0] == 0)
+          max = mid - 1;
+    else
+      min = mid + 1;
+  }
+  
+  jazigo = min;
+  return 0;
+}
+
+
+void add(vector<vector<vector<int>>> &array, int element)
+{
+  while (array[andar][n_jazigos - 1][0] != 0)
+    andar = (andar + 1) % n_andares;
+
+  if (array[andar][0][0] == 0) // se não houver nenhum elemento no andar
+  {
+    array[andar][0][0] = element;
+    array[andar][0][1] = 1;
+    jazigo = 0;
+    return;
+  }
+
+  binary_search(array, element, 0, n_jazigos - 1);
+
+  for (int i = n_jazigos - 2; i >= jazigo; i--)
+  {
+    if (array[andar][i][0] != 0)
+    {
+      array[andar][i + 1][0] = array[andar][i][0];
+      array[andar][i + 1][1] = array[andar][i][1];
+    }
+  }
+
+  array[andar][jazigo][0] = element;
+  array[andar][jazigo][1] = 1;
+}
+
+
+bool isThere(vector<vector<vector<int>>> &array, int element)
+{
+  int tentativas = 1;
+  int confirm = binary_search(array, element, 0, n_jazigos - 1);
+  
+  while (confirm == 0 && tentativas < n_andares)
+  {
+    andar = (andar + 1) % n_andares;
+    confirm = binary_search(array, element, 0, n_jazigos - 1);
+    tentativas++;
+  }
+  
+
+  if (confirm == -1 || confirm == 0)
+  {
+    cout << "?.?" << endl;
+    return false;
+  }
+  else
+  {
+    cout << andar << "." << jazigo << endl;
+    return true;
+  }
+}
