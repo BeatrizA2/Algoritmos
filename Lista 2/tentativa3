@@ -1,0 +1,153 @@
+#include <iostream>
+
+using namespace std;
+
+struct cova
+{
+  int chave = -1, presente;
+};
+
+int andar, jazigo, n_jazigos, n_andares;
+
+void add(cova* cem, int element);
+void binary_search_add(cova* cem, int element, int min, int max);
+int binary_search(cova* cem, int element);
+
+int main()
+{
+    string comando = "bia";
+    int chave, vagas;
+    cin >> n_andares >> n_jazigos;
+    vagas = n_andares*n_jazigos;
+    
+    cova* cemiterio = new cova[vagas];
+    
+    
+    while (comando != "END")
+    {
+        cin >> comando >> chave;
+        
+        if (comando == "ADD")
+        {
+            if (vagas == 0)
+            {
+                int vagas_aux = n_andares*n_jazigos;
+                n_andares = 2*n_andares + 1;
+                vagas = n_andares*n_jazigos;
+                
+                cova* cem_aux = cemiterio;
+                cemiterio = new cova[vagas];
+                
+                for (int i = 0; i < vagas_aux; i++)
+                {
+                    if (cem_aux[i].presente == 1)
+                    {
+                        andar = cem_aux[i].chave%n_andares;
+                        add(cemiterio, cem_aux[i].chave);
+                        vagas--;
+                    }
+                }
+                
+                delete[] cem_aux;
+            }
+            
+            andar = chave%n_andares;
+            add(cemiterio, chave);
+            vagas --;
+            cout << andar << "." << jazigo%n_jazigos << endl;
+            
+        }
+        else if (comando == "REM")
+        {
+          int index = binary_search(cemiterio, chave);
+          if (index != -1 && cemiterio[index].presente == 1)
+          {
+            cemiterio[index].presente = 0;
+            cout << andar << "." << index%n_jazigos << endl;
+          }
+          else
+            cout << "?.?" << endl;
+        }
+        else if(comando == "QRY")
+        {
+            int index = binary_search(cemiterio, chave);
+            if (index != -1 && cemiterio[index].presente == 1)
+            {
+              cout << andar << "." << index%n_jazigos << endl;
+            }
+            else
+              cout << "?.?" << endl;
+        }
+        
+    }
+    delete[] cemiterio;
+}
+
+
+void add(cova* cem, int element)
+{
+  while (cem[andar*n_jazigos + n_jazigos - 1].chave != -1)
+    andar = (andar + 1) % n_andares;
+
+  if (cem[andar*n_jazigos].chave == -1) // se não houver nenhum elemento no andar
+  {
+    cem[andar*n_jazigos].chave = element;
+    cem[andar*n_jazigos].presente = 1;
+    jazigo = 0;
+    return;
+  }
+
+  binary_search_add(cem, element, andar*n_jazigos, andar*n_jazigos + n_jazigos - 2);
+
+  for (int i = andar*n_jazigos + n_jazigos - 2; i >= jazigo; i--)
+  {
+      cem[i + 1] = cem[i];
+  }
+
+  cem[jazigo].chave = element;
+  cem[jazigo].presente = 1;
+}
+
+
+void binary_search_add(cova* cem, int element, int min, int max) //o novo elemento inserido nunca vai ser igual a outro
+{
+  int mid;
+  while (min <= max)
+  {
+    mid = (max + min)/2;
+
+    if(element < cem[mid].chave || cem[mid].chave == -1)
+          max = mid - 1;
+    else
+      min = mid + 1;
+  }
+  jazigo = min;
+}
+
+
+int binary_search(cova* cem, int element)
+{
+  int mid, tentativas = n_andares;
+
+  while (tentativas > 0)
+  {
+    int min = andar*n_jazigos, max = min + n_jazigos -1;
+    while (min <= max)
+    {
+      mid = (min + max)/2;
+      if (element == cem[mid].chave)
+        return mid;
+      else if(element < cem[mid].chave || cem[mid].chave == -1)
+          max = mid - 1;
+      else 
+        min = mid + 1;
+    }
+    andar = (andar + 1)%n_andares; tentativas --;
+  }
+  return -1;
+}
+
+
+
+
+
