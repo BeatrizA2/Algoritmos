@@ -1,0 +1,174 @@
+namespace std;
+
+struct cova
+{
+  int chave = -1, presente;
+};
+
+int andar, jazigo, n_jazigos, n_andares;
+
+void add(cova* cem, int element, int* posicoes);/////////
+void binary_search_add(cova* cem, int element, int min, int max);
+int binary_search(cova* cem, int element, int* posicoes);/////////
+
+int main()
+{
+    string comando = "bia";
+    int chave, vagas;
+    cin >> n_andares >> n_jazigos;
+    vagas = n_andares*n_jazigos;
+    
+    cova* cemiterio = new cova[vagas];
+    int* last_pos = new int[n_andares];/////////////
+    
+    
+    while (comando != "END")
+    {
+        cin >> comando >> chave;
+        
+        if (comando == "ADD")
+        {
+            if (vagas == 0)
+            {
+                int vagas_aux = n_andares*n_jazigos;
+                n_andares = 2*n_andares + 1;
+                vagas = n_andares*n_jazigos;
+                
+                delete[] last_pos;
+                last_pos = new int[n_andares];
+                
+                cova* cem_aux = cemiterio;
+                cemiterio = new cova[vagas];
+                
+                for (int i = 0; i < vagas_aux; i++)
+                {
+                    if (cem_aux[i].presente == 1)
+                    {
+                        andar = cem_aux[i].chave%n_andares;
+                        add(cemiterio, cem_aux[i].chave, last_pos);
+                        vagas--;
+                    }
+                }
+                
+                delete[] cem_aux;
+            }
+            
+            andar = chave%n_andares;
+            add(cemiterio, chave, last_pos);
+            vagas --;
+            cout << andar << "." << jazigo%n_jazigos << endl;
+            
+        }
+        else if (comando == "REM")
+        {
+          int index = binary_search(cemiterio, chave, last_pos);
+          if (index != -1 && cemiterio[index].presente == 1)
+          {
+            cemiterio[index].presente = 0;
+            cout << andar << "." << index%n_jazigos << endl;
+          }
+          else
+            cout << "?.?" << endl;
+        }
+        else if(comando == "QRY")
+        {
+            int index = binary_search(cemiterio, chave, last_pos);
+            if (index != -1 && cemiterio[index].presente == 1)
+            {
+              cout << andar << "." << index%n_jazigos << endl;
+            }
+            else
+              cout << "?.?" << endl;
+        }
+        
+    }
+    delete[] cemiterio;
+}
+
+
+void add(cova* cem, int element, int* posicoes) ////////quase ajeitado
+{
+  while (andar*n_jazigos + n_jazigos - 1 == posicoes[andar]) // verifica se o último jazigo do andar está ocupado - se tem vaga no andar
+    andar = (andar + 1) % n_andares;
+
+  if (cem[andar*n_jazigos].chave == -1) // se não houver nenhum elemento no andar
+  {
+    cem[andar*n_jazigos].chave = element;
+    cem[andar*n_jazigos].presente = 1;
+    posicoes[andar] = andar*n_jazigos;
+    jazigo = 0;
+    return;
+  }
+  
+  if(element < cem[andar*n_jazigos].chave) //se o elemento for menor que o primeiro elemento do andar
+  {
+      for (int i = posicoes[andar]; i >= andar*n_jazigos; i--)
+      {
+          cem[i + 1] = cem[i];
+      }
+      cem[andar*n_jazigos].chave = element;
+      cem[andar*n_jazigos].presente = 1;
+      jazigo = 0;
+      posicoes[andar] = posicoes[andar] + 1;
+      return;
+  }
+  
+  if (element > cem[posicoes[andar]].chave) //se o elemento for maior que o do ultimo jazigo ocupado
+  {
+    posicoes[andar] = posicoes[andar] + 1;
+    cem[posicoes[andar]].chave = element;
+    cem[posicoes[andar]].presente = 1;
+    jazigo = posicoes[andar];
+    return;
+  }
+
+  binary_search_add(cem, element, andar*n_jazigos + 1, posicoes[andar]);
+
+  for (int i = posicoes[andar]; i >= jazigo; i--)
+  {
+      cem[i + 1] = cem[i];
+  }
+
+  cem[jazigo].chave = element;
+  cem[jazigo].presente = 1;
+  posicoes[andar] = posicoes[andar] + 1;
+}
+
+
+void binary_search_add(cova* cem, int element, int min, int max) //o novo elemento inserido nunca vai ser igual a outro
+{
+  int mid;
+  while (min <= max)
+  {
+    mid = (max + min)/2;
+
+    if(element < cem[mid].chave || cem[mid].chave == -1)
+          max = mid - 1;
+    else
+      min = mid + 1;
+  }
+  jazigo = min;
+}
+
+
+int binary_search(cova* cem, int element, int* posicoes)
+{
+  int mid, tentativas = n_andares;
+
+  while (tentativas > 0)
+  {
+    int min = andar*n_jazigos, max = posicoes[andar];
+    while (min <= max)
+    {
+      mid = (min + max)/2;
+      if (element == cem[mid].chave)
+        return mid;
+      else if(element < cem[mid].chave || cem[mid].chave == -1)
+          max = mid - 1;
+      else 
+        min = mid + 1;
+    }
+    andar = (andar + 1)%n_andares; tentativas --;
+  }
+  return -1;
+}
