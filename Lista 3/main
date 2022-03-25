@@ -1,0 +1,171 @@
+#include <iostream>
+
+using namespace std;
+
+
+int n_bits_total, depth, total_sum, height_change, id_main, n_bits, flag;
+
+struct node{
+    int id, w, bf, rnk;
+    node *left, *right;
+};
+
+
+void rotate_left(node *&raiz)
+{
+    node *R = raiz->right;
+    node *R_L = R->left;
+    R->left = raiz;
+    raiz->right = R_L;
+        
+    raiz->bf = raiz->bf - 1 - max(0, R->bf);
+    R->bf = R->bf - 1 + min(0, raiz->bf);
+    raiz = R;
+    raiz->rnk += raiz->left->rnk + raiz->left->w;//////////
+}
+
+void rotate_right(node *&raiz)
+{
+    node* R = raiz->left;
+    node* R_R = R->right;
+    R->right = raiz;
+    raiz->left = R_R;
+        
+    raiz->bf = raiz->bf + 1 - min(0, R->bf);
+    R->bf = R->bf + 1 + max(0, raiz->bf);
+    raiz = R;
+    raiz->right->rnk = raiz->right->rnk - raiz->rnk - raiz->w;
+}
+
+void avl_insert(node *&root)
+{
+    //inserção do nó
+    if (root == nullptr) //se a árvore estiver vazia
+    {
+        node* new_root = new node();
+        new_root->id = id_main;
+        new_root->w = n_bits;
+        new_root->left = nullptr;
+        new_root->right = nullptr;
+        height_change = 1;
+            
+        root = new_root; return;
+    }
+    else if (id_main < root->id)
+    {
+        root->rnk += n_bits;
+        avl_insert(root->left);
+        root->bf = root->bf - height_change;
+    }
+    else if (id_main > root->id)
+    {
+        avl_insert(root->right);
+        root->bf = root->bf + height_change;
+    }
+    else //value == root->id
+    {
+        root->w = root->w + n_bits;
+        height_change = 0;
+        return;
+    }
+    
+    //balanceamento
+    if (height_change == 0 || root->bf == 0)
+    {
+       height_change = 0;
+       return;
+    }
+    else if (root->bf == 1 || root->bf == -1)
+    {
+        height_change = 1;
+        return;
+    }
+    else
+    {
+        if (root->bf == -2)
+        {
+            if (root->left->bf == 1)
+                rotate_left(root->left);
+            height_change = 0;
+            return rotate_right(root);
+        }
+        
+        if (root->right->bf == -1)
+            rotate_right(root->right);
+        height_change = 0;
+        return rotate_left(root);
+    }
+    
+}
+
+
+void search_sum(node* root)
+{
+    if (flag == 1){return;}
+    if (root == nullptr){flag = 1; return;}
+    
+    if (root->id == id_main)
+    {
+        total_sum += root->rnk;
+    }
+    else if (root->id < id_main)
+    {
+        total_sum += root->rnk + root->w;
+        search_sum(root->right);
+    }
+    else
+        search_sum(root->left);
+}
+
+
+void search_wei(node* root)
+{
+    node *temp = new node;
+    temp = root;
+    
+    while (temp != nullptr)
+    {
+        depth++;
+        if (temp->id == id_main)
+        {
+            cout << temp->w << " " << depth - 1 << '\n'; return;
+        }
+        else if (id_main > temp->id)
+            temp = temp->right;
+        else
+            temp = temp->left;
+    }
+    cout << 0 << " " << -1 << '\n';
+}
+
+
+int main()
+{
+    std::ios::sync_with_stdio(false);
+    string comando = "k";
+    
+    node *root = nullptr;
+    
+    while (comando != "END")
+    {
+        cin >> comando >> id_main;
+        if (comando == "ADD")
+            cin >> n_bits;
+        
+        if (comando == "ADD")
+        {
+            avl_insert(root);
+            n_bits_total = n_bits_total + n_bits;
+            cout << n_bits_total << '\n';
+        }
+        else if (comando == "WEI")
+        {
+            search_wei(root); depth = 0;
+        }
+        else if(comando == "RNK")
+        {
+            search_sum(root);
+            cout << total_sum << '\n'; total_sum = flag = 0;
+        }
+    }
+}
