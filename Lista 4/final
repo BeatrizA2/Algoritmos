@@ -1,0 +1,189 @@
+#include <iostream>
+#include <string>
+
+int N, K, ident, stop;
+
+using namespace std;
+
+struct id{
+    string k_clique, anti_k_clique;
+    int **adj_matrix;
+    int *clique;
+    int *degree;
+    bool found = false, matrix = false;
+};
+
+
+void config_matrix(int **&matriz, int *&grau)
+{
+    grau = new int[N];
+	matriz = new int*[N];
+        for(int i = 0; i < N; i++)
+            matriz[i] = new int[N];
+
+	int c, a, j = 1;
+	string inp;
+	while (j < N) //N - 1 linhas de input
+	{
+		cin >> inp;
+		for(c = 0; c < j; c++)
+		{
+			a  = (inp[c] == '1')? 1: 0;
+			matriz[j][c] = matriz[c][j] = a;
+			grau[c] += a; 
+			grau[j] += a;
+		}
+		j++;
+	}
+	
+}
+
+bool is_clique(int **&adj, int *& clique)
+{
+	int a, b;
+	for (a = 0; a < K; a++)
+	{
+		for(b = a + 1; b < K; b++)
+		{
+			if (adj[clique[a]][clique[b]] == 0)
+				return false; 
+		}
+	}
+	return true;
+}
+
+void find_clique(id*& agentes, int index, int elem)
+{
+	if(stop == 1)
+        return;
+	if (index == K)
+	{
+	    if(is_clique(agentes[ident].adj_matrix, agentes[ident].clique))
+	    {
+	        for(int i = 0; i < K; i++)
+	            agentes[ident].k_clique += " " + to_string(agentes[ident].clique[i]);
+	        stop = 1;
+	        agentes[ident].found = true;
+	    }
+	   
+	    return;
+	}
+	
+	if(elem >= N)
+	    return;
+	if(agentes[ident].degree[elem] >= K - 1)
+	{
+	    agentes[ident].clique[index] = elem;
+	    find_clique(agentes, index + 1, elem + 1);
+	}
+	
+	find_clique(agentes, index, elem + 1);
+
+}
+
+
+void search_clique(int *& clique, id*& agentes, string k_clique)
+{
+	int n = 0;
+	int flag = 0;
+	while((n < K) && flag == 0)
+	{
+		int j = clique[n];
+		for(int i = n + 1; i < K; i++)
+		{
+			if(agentes[ident].adj_matrix[j][clique[i]] == 0)
+			{
+				flag = 1; break;
+			}	
+		}
+		n++;
+	}
+	if (flag == 1)
+	{
+		cout << "FAIL" << "\n";
+		agentes[ident].anti_k_clique += " " + k_clique;
+	}
+	else
+	{
+		cout << "SUCC" << k_clique << "\n";
+		agentes[ident].k_clique = k_clique;
+		agentes[ident].found = true;
+		agentes[ident].clique = new int[K];
+		agentes[ident].clique = clique;
+	}
+}
+
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    int num_ids, tentativas, id1, id2;
+    
+    cin >> num_ids >> N >>  K >> tentativas;
+    
+    id* agentes = new id[num_ids]; //array com o id dos agentes
+    
+    while (tentativas > 0)
+    {
+        cin >> id1 >> id2;
+        if (agentes[id1].found == true && agentes[id2].found == true)
+        {
+        	if (agentes[id1].k_clique == agentes[id2].k_clique)
+        		cout << "SUCC" << agentes[id1].k_clique << "\n";
+        	else
+        		cout << "FAIL" << "\n";
+        }
+        else if (agentes[id1].found == true)
+        {
+            if(agentes[id2].anti_k_clique.find(agentes[id1].k_clique) != string::npos)
+                cout << "FAIL" << "\n";
+            else
+            {
+            	if (agentes[id2].matrix == false)
+            	{
+            		config_matrix(agentes[id2].adj_matrix, agentes[id2].degree);
+            		agentes[id2].matrix = true;
+            	}	
+            	ident = id2;
+            	search_clique(agentes[id1].clique, agentes, agentes[id1].k_clique);
+            }
+        }
+        else if (agentes[id2].found == true)
+        {
+            if(agentes[id1].anti_k_clique.find(agentes[id2].k_clique) != string::npos)
+                cout << "FAIL" << "\n";
+            else
+            {
+            	if (agentes[id1].matrix == false)
+            	{
+            		config_matrix(agentes[id1].adj_matrix, agentes[id1].degree);
+            		agentes[id1].matrix = true;
+            	}
+            	ident = id1;
+            	search_clique(agentes[id2].clique, agentes, agentes[id2].k_clique);
+            }
+        }
+        else
+        {
+        	if(agentes[id1].matrix == false)
+        	{
+        		config_matrix(agentes[id1].adj_matrix, agentes[id1].degree);
+        		agentes[id1].matrix = true;
+        	}
+        	if(agentes[id2].matrix == false)
+        	{
+        		config_matrix(agentes[id2].adj_matrix, agentes[id2].degree);
+        		agentes[id2].matrix = true;
+        	}
+        
+            
+        	agentes[id1].clique = new int[K]; ident = id1;
+        	find_clique(agentes, 0, 0); stop = 0;
+        	agentes[ident].found = true; ident = id2;
+        	search_clique(agentes[id1].clique, agentes, agentes[id1].k_clique);
+        }
+        tentativas--;
+    }
+}
+
+
